@@ -1,0 +1,265 @@
+---
+title: "Quarto project 1"
+author: "Kounga Ryan Yvan"
+date : "`r Sys.Date()`"
+format: 
+  dashboard:
+    orientation: columns
+editor: visual
+server: shiny
+---
+
+```{r}
+#| context: setup
+
+require(dplyr)
+require(ggplot2)
+require(plotly)
+require(FactoMineR)
+require(factoextra)
+require(shiny)
+```
+
+# Tendances des Ventes
+
+## sidebar {.sidebar}
+
+### Choix des variable Pour le tableau d'analyse
+
+```{r}
+selectInput(
+  "variableInputId1",
+  "variable choise",
+  choices = names(txhousing)[c(-1,-2,-3,-9)]
+)
+```
+
+### Choix des variable a analysis pour les Graphiques
+
+```{r}
+selectInput(
+  "variable2InputId1",
+  "variable choise",
+  choices = names(txhousing)[c(-1,-4,-5,-6,-7,-8,-9)]
+)
+```
+
+## column {width = 35%}
+
+```{r}
+tableOutput(
+  outputId = "txhousingOutputId"
+)
+```
+
+```{r}
+tableOutput(
+  outputId = "analysedesventeOutputId"
+)
+```
+
+## column {width = 65%}
+
+```{r}
+plotlyOutput(
+  outputId = "vente_total_par_anneeOutputId"
+)
+```
+
+### column
+
+```{r}
+plotlyOutput(
+  outputId = "ventes_moyennes_par_moisOutputId"
+)
+```
+
+### column
+
+```{r}
+plotlyOutput(
+  outputId = "histogramme_des_ventesOutputId"
+)
+```
+
+# Analyse des Prix
+
+## sidebar {.sidebar}
+
+### Choix des variable a analysis pour les Graphiques
+
+```{r}
+selectInput(
+  "variableInputId2",
+  "variable choise",
+  choices = names(txhousing)[c(-1,-4,-5,-6,-7,-8,-9)]
+)
+```
+
+## column {width = 35%}
+
+## column {width = 65%}
+
+```{r}
+plotlyOutput(
+  outputId = "prix_median_par_anneeOutputId"
+)
+```
+
+### column
+
+```{r}
+plotlyOutput(
+  outputId = "périodes_de_forte_augmentation_ou_de_forte_baisseOutputId"
+)
+```
+
+# Listings et Inventaire
+
+## sidebar {.sidebar}
+
+### Choix des variable a analysis pour les Graphiques
+
+```{r}
+selectInput(
+  "variableInputId3",
+  "variable choise",
+  choices = names(txhousing)[c(-1,-4,-5,-6,-7,-8,-9)]
+)
+```
+
+## column {width = 30%}
+
+## column {width = 70%}
+
+```{r}
+plotlyOutput(
+  outputId = "nombre_de_listingsOutputId"
+)
+```
+
+### column
+
+```{r}
+plotlyOutput(
+  outputId = "nuages_de_pointsOutputId"
+)
+
+```
+
+```{r}
+#| context: server
+
+output$txhousingOutputId <- renderTable(
+  {
+    txhousing %>%
+      head(10)
+  }, caption = "Présentation des données"
+)
+
+
+output$analysedesventeOutputId <- renderTable({
+  variable = input$variableInputId1
+    txhousing %>%
+  group_by(city) %>%
+      summarise(
+        min = min(!!rlang::sym(variable), na.rm = TRUE),
+        max = max(!!rlang::sym(variable), na.rm = TRUE),
+        mean = mean(!!rlang::sym(variable), na.rm = TRUE),
+        var = var(!!rlang::sym(variable), na.rm = TRUE),
+        sd = sd(!!rlang::sym(variable), na.rm = TRUE),
+        median = median(!!rlang::sym(variable), na.rm = TRUE)
+    )
+  }, caption = "Analyse statistique des vente"
+)
+
+
+output$vente_total_par_anneeOutputId <- renderPlotly(
+  {
+    variable = input$variable2InputId1
+    data <- txhousing%>%
+      group_by(!!rlang::sym(variable))%>%
+      summarise(
+        mean_sale = mean(sales ,na.rm = TRUE))
+      ggplot(data, mapping = aes(x = !!rlang::sym(variable), y = mean_sale )) +
+      geom_point()+
+      geom_line(color = "lightblue") +
+      labs(title = "Ventes de logements au Texas de 2000 à 2015", x = paste(variable), y = "Nombre de ventes")
+
+  }
+)
+
+output$ventes_moyennes_par_moisOutputId <- renderPlotly(
+  {
+    variable = input$variable2InputId1
+    data <- txhousing %>%
+       group_by(!!rlang::sym(variable)) %>%
+      summarise(
+        mean_sale = mean(sales ,na.rm = TRUE))
+       ggplot(data,mapping =  aes(x = !!rlang::sym(variable), y = mean_sale)) +
+       geom_bar(stat = "identity", fill = "skyblue") +
+       labs(title = "Ventes moyennes de logements (tendances saisonnières)", x = paste(variable), y = "Nombre de ventes")
+  }
+)
+
+
+output$histogramme_des_ventesOutputId <- renderPlotly({
+  txhousing %>%
+    ggplot(aes(x = sales)) +
+    geom_histogram(binwidth = 50, color = "skyblue") +
+    labs(x = "Montant des Ventes", y = "Fréquence", title = "Distribution des Ventes Mensuelles")
+ }
+)
+
+
+output$prix_median_par_anneeOutputId <- renderPlotly(
+  {
+    variable = input$variableInputId2
+    data <- txhousing %>%
+      group_by(!!rlang::sym(variable))%>%
+      summarise(
+        prix_median = mean(median ,na.rm = TRUE))
+      ggplot(data, mapping = aes(x = !!rlang::sym(variable), y = prix_median)) +
+      geom_point()+
+      geom_line(color= "red") +
+      labs(title = "Prix médian des logements au Texas de 2000 à 2015", x = paste(variable), y = "Prix médian")
+  }
+)
+
+output$périodes_de_forte_augmentation_ou_de_forte_baisseOutputId <- renderPlotly({
+  variable = input$variableInputId2
+  txhousing %>%
+    mutate(change = ifelse(median - lag(median) > 0, "augmentation", "baisse")) %>%
+    filter(!is.na(change)) %>%
+    group_by(month) %>%
+    ggplot(aes(x = !!rlang::sym(variable) , fill = change)) +
+    geom_bar() +
+    labs(title = "Périodes de forte augmentation ou de forte baisse", x = paste(variable), y = "Nombre de mois")
+  }
+)
+
+
+output$nombre_de_listingsOutputId <- renderPlotly({
+  variable = input$variableInputId3
+  data <- txhousing %>%
+      group_by(!!rlang::sym(variable))%>%
+      summarise(mean_listing = mean(listings ,na.rm = TRUE))
+    ggplot(data, aes(x = !!rlang::sym(variable), y = mean_listing)) +
+      geom_point()+
+      geom_line( color = "red") +
+      labs(title = "Listings de logements au Texas de 2000 à 2015",x = paste(variable) ,y = "Nombre de listings")
+  }
+)
+
+output$nuages_de_pointsOutputId <- renderPlotly(
+  {
+    txhousing %>%
+      group_by(month) %>%
+      ggplot( aes(x = inventory, y = volume)) +
+      geom_point(color = "red" , fill = "black") +
+      labs(title = "Relation entre l'inventaire de logements et le volume des ventes",x = "Inventaire (mois)", y = "Volume des ventes (millions de dollars)")
+
+  }
+)
+
+```

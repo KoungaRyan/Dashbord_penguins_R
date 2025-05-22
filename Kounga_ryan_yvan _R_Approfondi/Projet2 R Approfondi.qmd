@@ -1,0 +1,119 @@
+---
+title: "Penguins"
+author: "Kounga Tchomnou Ryan yvan"
+date : "`r Sys.Date()`"
+format: html
+---
+
+```{r include=FALSE}
+#| context: setup
+
+require(dplyr)
+require(ggplot2)
+```
+
+
+# Importation et lecture des données penguins
+
+```{r echo=FALSE}
+# importation des donnees
+penguins_data <- read.csv("penguins.csv", header = TRUE)
+head(penguins_data)
+```
+# Travaile à faire 
+
+## Question 1
+
+```{r echo=FALSE}
+
+nb_obs_manquantes_par_variable <- colSums(is.na(penguins_data))
+
+# Afficher le nombre d'observations manquantes par variable
+print(nb_obs_manquantes_par_variable)
+```
+
+## Question 2
+
+```{r echo=FALSE}
+# Compter le nombre de lignes contenant au moins une valeur manquante
+nb_lignes_avec_valeur_manquante <- sum(!complete.cases(penguins_data))
+
+# Afficher le nombre de lignes contenant au moins une valeur manquante
+print(nb_lignes_avec_valeur_manquante)
+```
+
+## Question 3
+
+```{r echo=FALSE}
+# Supprimer les lignes contenant au moins une valeur manquante
+penguins_data2 <- na.omit(penguins_data)
+
+# Afficher le nouveau jeu de données sans les lignes contenant des valeurs manquantes
+head(penguins_data2)
+```
+
+## Question 4
+
+```{r echo=FALSE}
+# Calculer les statistiques univariées
+summary_stats <- summary(penguins_data2)
+
+# Afficher les statistiques univariées
+print(summary_stats)
+```
+### Commentaires sur les résultats 
+
+1. Pour la variable "bill_length_mm" : La moyenne de la longueur du bec est de 43.99 millimètres, avec une médiane de 44.5 millimètres. Cela suggère que la distribution des longueurs de bec est asymétrie, L'écart entre le minimum et le maximum est de 27.50 millimètres, indiquant une variabilité importante dans les données.
+
+2. Pour la variable "bill_depth_mm" : La moyenne de la profondeur du bec est de 17.16 millimètres, avec une médiane de 17.30 millimètres. Les quartiles Q1 et Q3 sont respectivement 15.60 et 18.70, montrant la répartition des données autour de la médiane.
+
+3. Pour la variable "flipper_length_mm" : La longueur moyenne des palmes est de 201 millimètres, avec une médiane de 197 millimètres.L'écart interquartile est de 41 millimètres, indiquant la dispersion des données autour de la médiane.
+
+
+
+## Question 5
+
+### Section (a)
+
+```{r echo=FALSE}
+# Créer un graphique de dispersion pour la longueur et la profondeur des becs
+penguins_data2 %>%
+ggplot(aes(x = bill_length_mm, y = bill_depth_mm)) +
+  geom_point() +
+  labs(x = "Longueur du bec (mm)", y = "Profondeur du bec (mm)",
+       title = "Relation entre la longueur et la profondeur des becs")
+```
+
+### Section (b)
+
+```{r echo=FALSE}
+# Créer un graphique de dispersion pour la taille des becs et des nageoires
+penguins_data2 %>%
+  ggplot(aes(x = bill_length_mm, y = flipper_length_mm)) +
+  geom_point() +
+  labs(x = "Longueur du bec (mm)", y = "Longueur de la nageoire (mm)",
+       title = "Variation de la taille des becs et des nageoires")
+```
+
+### Section (c)
+
+```{r echo=FALSE}
+# Créer un graphique de boîte pour comparer les mesures entre les espèces
+penguins_data2 %>%
+  ggplot(aes(x = species, y = bill_length_mm)) +
+  geom_boxplot() +
+  labs(x = "Espèce", y = "Longueur du bec (mm)",
+       title = "Répartition de la longueur du bec par espèce")
+```
+
+
+
+
+
+
+
+
+
+
+
+

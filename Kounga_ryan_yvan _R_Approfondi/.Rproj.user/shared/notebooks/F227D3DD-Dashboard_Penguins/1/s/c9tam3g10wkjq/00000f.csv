@@ -1,0 +1,69 @@
+"0","#| context: setup"
+"0",""
+"0","require(tidyverse)"
+"2","Le chargement a nécessité le package : tidyverse
+"
+"2","Avis dans library(package, lib.loc = lib.loc, character.only = TRUE, logical.return = TRUE,  :"
+"2","
+ "
+"2"," aucun package nommé ‘tidyverse’ n'est trouvé
+"
+"0","require(ggplot2)"
+"2","Le chargement a nécessité le package : ggplot2
+"
+"0","require(plotly)"
+"2","Le chargement a nécessité le package : plotly
+"
+"2","Registered S3 method overwritten by 'data.table':
+  method           from
+  print.data.table     
+"
+"2","Registered S3 methods overwritten by 'htmltools':
+  method               from         
+  print.html           tools:rstudio
+  print.shiny.tag      tools:rstudio
+  print.shiny.tag.list tools:rstudio
+"
+"2","Registered S3 method overwritten by 'htmlwidgets':
+  method           from         
+  print.htmlwidget tools:rstudio
+"
+"2","
+Attachement du package : ‘plotly’
+
+"
+"2","L'objet suivant est masqué depuis ‘package:ggplot2’:
+
+    last_plot
+
+"
+"2","L'objet suivant est masqué depuis ‘package:stats’:
+
+    filter
+
+"
+"2","L'objet suivant est masqué depuis ‘package:graphics’:
+
+    layout
+
+"
+"0","require(dplyr)"
+"2","Le chargement a nécessité le package : dplyr
+"
+"2","
+Attachement du package : ‘dplyr’
+
+"
+"2","Les objets suivants sont masqués depuis ‘package:stats’:
+
+    filter, lag
+
+"
+"2","Les objets suivants sont masqués depuis ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+"
+"0","require(shiny)"
+"2","Le chargement a nécessité le package : shiny
+"

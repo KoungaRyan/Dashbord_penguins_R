@@ -1,0 +1,241 @@
+---
+title: "Penguins Dashboard"
+author: "Kounga Ryan"
+format: 
+  dashboard:
+    orientation: columns
+editor: visual
+server: shiny
+---
+
+```{r include=FALSE}
+#| context: setup
+
+require(tidyverse)
+require(ggplot2)
+require(plotly)
+require(dplyr)
+require(shiny)
+require(knitr)
+```
+
+```{r}
+
+penguins_data <- read_csv("penguins.csv" )
+penguins <- na.omit(penguins_data)
+
+```
+
+# Statistiques descriptives et Distribution des espèces par île
+
+## sidebar {.sidebar}
+
+```{r}
+selectInput(
+  "variableInputId",
+  "variable choise",
+  choices = names(penguins)[c(-1,-2,-7)]
+)
+
+```
+
+## column {width = 80%}
+
+```{r}
+tableOutput(
+  outputId = "penguinsOutputId"
+)
+
+```
+
+### column
+
+```{r}
+tableOutput(
+  outputId = "univariateOutputId"
+)
+```
+
+## column {width = 20%}
+
+```{r}
+tableOutput(
+  outputId = "species_island_countOutputId"
+)
+```
+
+### column
+
+```{r}
+plotlyOutput(
+  outputId = "species_island_countplotOutputId"
+)
+```
+
+# Analyse morphologique
+
+## sidebar {.sidebar}
+
+```{r}
+
+
+
+selectInput(
+  "variableInputId1",
+  "variable choise for X",
+  choices = names(penguins)[c(-1,-2,-4,-5,-6, -7, -8)]
+)
+
+selectInput(
+  "variableInputId2",
+  "variable choise for Y",
+  choices = names(penguins)[c(-1,-2,-3, -7, -8)]
+)
+
+selectInput(
+  "variableInputId3",
+  "variable choise for Density plot",
+  choices = names(penguins)[c(-1,-2, -7, -8)]
+)
+
+```
+
+## column {width = 50%}
+
+```{r}
+plotlyOutput(
+  outputId = "ScatterplotOutputId"
+)
+
+```
+
+### column
+
+```{r}
+plotlyOutput(
+  outputId = "penguinsboxplotOutputId"
+)
+```
+
+## column {width = 50%}
+
+```{r}
+plotlyOutput(
+  outputId = "densityplotOutputId"
+)
+```
+
+### column
+
+```{r}
+plotlyOutput(
+  outputId = "sexplotOutputId"
+)
+```
+
+# Regression
+
+## column {width = 50%}
+
+```{r}
+plotlyOutput(
+  outputId = "regressionplotOutputId"
+)
+
+```
+
+```{r}
+#| context: server
+
+penguins_data <- read_csv("penguins.csv" )
+penguins <- na.omit(penguins_data)
+
+output$penguinsOutputId <- renderTable(
+  {
+    penguins %>% 
+      head()
+  }, caption = "Présentation des données"
+)
+
+output$univariateOutputId <- renderTable({
+  variable = input$variableInputId
+    penguins %>%
+      group_by(species) %>%
+      summarise(
+        min = min(!!rlang::sym(variable)),
+        max = max(!!rlang::sym(variable)),
+        mean = mean(!!rlang::sym(variable)),
+        var = var(!!rlang::sym(variable)),
+        sd = sd(!!rlang::sym(variable)),
+        median = median(!!rlang::sym(variable))
+    )
+  }, caption = "Analyse statistique des Variables"
+)
+
+output$species_island_countOutputId <- renderTable({
+  species_island_count <- penguins %>%
+    group_by(species, island) %>%
+    summarise(count = n(), .groups = 'drop')
+}, caption = "Nombre de pingouins par espèce et par île"
+) 
+
+output$species_island_countplotOutputId <- renderPlotly({
+  (species_island_count <- penguins %>%
+    group_by(species, island) %>%
+    summarise(count = n(), .groups = 'drop')) %>%
+    ggplot(mapping = aes(x = island, y = count, fill = species)) +
+    geom_bar(stat = "identity", position = "dodge") +
+    labs(title = "Répartition des espèces de pingouins par île", x = "Île", y = "Nombre de pingouins")
+   
+})
+
+
+output$penguinsboxplotOutputId <- renderPlotly({
+  penguins %>%
+    ggplot( mapping = aes(x = species, y = bill_length_mm, fill = species)) +
+    geom_boxplot() +
+    labs(title = "Longueur du bec par espèce", x = "Espèce", y = "Longueur du bec (mm)")
+
+})
+
+output$ScatterplotOutputId <- renderPlotly({
+  variable1 = input$variableInputId1
+  variable2 = input$variableInputId2
+  penguins %>%
+    ggplot(mapping =  aes(x = !!rlang::sym(variable1), y = !!rlang::sym(variable2), color = species)) +
+    geom_point() +
+    labs(title = "Relation entre la longueur du bec, profondeur du bec et la masse corporelle ", x = paste(variable1), y = paste(variable2))
+
+})
+
+output$densityplotOutputId <- renderPlotly({
+  variable3 = input$variableInputId3
+  penguins %>%
+    ggplot(mapping = aes(x = !!rlang::sym(variable3))) +
+    geom_density(fill = "skyblue", alpha = 0.7) +
+    labs(title = "Density of variables", x = paste(variable3), y = "Densité")
+})
+
+output$sexplotOutputId <- renderPlotly({
+  penguins %>%
+    ggplot(mapping =  aes(x = sex, fill = species)) +
+    geom_bar(position = "dodge") +
+    labs(title = "Comparaison des sexes des pingouins par espèce", x = "Sexe", y = "Nombre de pingouins")
+})
+
+output$regressionplotOutputId <- renderPlotly({
+  penguins %>%
+    ggplot(mapping = aes(x = flipper_length_mm, y = body_mass_g)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE, color = "blue") +
+    labs(title = "Relation entre la longueur de la nageoire et le poids corporel", x = "Longueur de la nageoire (mm)", y = "Poids corporel (g)")
+
+})
+
+
+
+
+
+
+
+```

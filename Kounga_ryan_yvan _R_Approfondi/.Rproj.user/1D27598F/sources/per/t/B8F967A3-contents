@@ -1,0 +1,216 @@
+---
+title: "Iris"
+author: "Ryan"
+date : "`r Sys.Date()`"
+format: 
+  dashboard:
+    orientation: columns
+editor: visual
+server: shiny
+---
+
+```{r}
+#| context: setup
+
+require(dplyr)
+require(ggplot2)
+require(plotly)
+require(shiny)
+```
+
+# Univariée
+
+## sidebar {.sidebar}
+
+```{r}
+selectInput(
+  "variableInputId",
+  "variable choise",
+  choices = names(iris)[-5]
+)
+
+```
+
+## column {width = 35%}
+
+```{r}
+tableOutput(
+  outputId = "irisOutputId"
+)
+tableOutput(
+  outputId = "univariateOutputId"
+)
+```
+
+## column {width = 65%}
+
+```{r}
+plotlyOutput(
+  outputId = "boxplotOutputId"
+)
+```
+
+### column
+
+```{r}
+plotlyOutput(
+  outputId = "histplotOutputId"
+)
+```
+
+# Bivarié
+
+## sidebar {.sidebar}
+
+### Choix des variable a analysis
+
+```{r}
+selectInput(
+  "variableInputId1",
+  "1st variable choise",
+  choices = names(iris)[-5]
+)
+```
+
+```{r}
+selectInput(
+  "variableInputId2",
+  "2nd variable choise",
+  choices = names(iris)[-5]
+)
+```
+
+## column {width = 35%}
+
+```{r}
+tableOutput(
+  outputId = "irisOutputId1"
+)
+
+```
+
+### column
+
+```{r}
+textOutput(
+  outputId = "regressionoutputId"
+)
+```
+
+## column {width = 65%}
+
+#### Box plot variable 1
+
+```{r}
+plotlyOutput(
+  outputId = "boxplotOutputId1"
+)
+```
+
+### column
+
+```{r}
+plotlyOutput(
+  outputId = "nuagedepointplotOutputId"
+)  
+```
+
+```{r}
+#| context: server
+
+output$irisOutputId <- renderTable(
+  {
+    iris %>% 
+      head(n=5)
+  }
+)
+
+output$univariateOutputId <- renderTable({
+  variable = input$variableInputId
+    iris %>%
+  group_by(Species) %>%
+      summarise(
+        min = min(!!rlang::sym(variable)),
+        max = max(!!rlang::sym(variable)),
+        mean = mean(!!rlang::sym(variable)),
+        var = var(!!rlang::sym(variable)),
+        sd = sd(!!rlang::sym(variable)),
+        median = median(!!rlang::sym(variable))
+    )
+  }
+)
+
+output$boxplotOutputId <- renderPlotly(
+  {
+    variable = input$variableInputId
+    (iris%>%
+        ggplot(mapping = aes(x= Species, y = !!rlang::sym(variable)  ,color=Species))+
+        geom_boxplot()
+)%>%
+  ggplotly()
+  }
+)
+
+output$histplotOutputId <- renderPlotly(
+  {
+    variable = input$variableInputId
+    (iris%>%
+        ggplot(mapping = aes( x = !!rlang::sym(variable)  ,color=Species)) +
+        geom_histogram()
+)%>%
+      ggplotly()
+  }
+)
+
+
+
+output$irisOutputId1 <- renderTable(
+  {
+    iris %>% 
+      head(n=5)
+  }
+)
+
+output$boxplotOutputId1 <- renderPlotly(
+  {
+    variable1 = input$variableInputId1
+    (
+      iris %>%
+        ggplot(mapping = aes(x = Species , y = !!rlang::sym(variable1) ,color= Species)) +
+        geom_boxplot()
+)%>%
+      ggplotly()
+  }
+)
+
+output$nuagedepointplotOutputId <- renderPlotly(
+  {
+    variable1 = input$variableInputId1
+    variable2 = input$variableInputId2
+    (
+      iris %>%
+        ggplot(mapping = aes(x = !!rlang::sym(variable1), y = !!rlang::sym(variable2),color= Species)) +
+        geom_point()
+)%>%
+      ggplotly()
+  }
+)
+
+output$regressionoutputId <- renderText(
+  {
+    variable1 = input$variableInputId1
+    variable2 = input$variableInputId2
+    (
+      iris %>% 
+        summarise(
+           modele = lm(!!rlang::sym(variable1) ~ !!rlang::sym(variable2))
+        ) %>%
+        summary(modele)
+    )
+    
+  }
+)
+
+
+
+```
